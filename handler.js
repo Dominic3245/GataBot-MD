@@ -26,10 +26,14 @@ export async function handler(chatUpdate) {
 this.msgqueque = this.msgqueque || [];
 this.uptime = this.uptime || Date.now();
 if (!chatUpdate) {
-return;
+return
 }
-this.pushMessage(chatUpdate.messages).catch(console.error);
-let m = chatUpdate.messages[chatUpdate.messages.length - 1];
+if (!chatUpdate || !chatUpdate.messages) {
+return
+} else {
+this.pushMessage(chatUpdate.messages).catch(console.error)
+}
+let m = chatUpdate.messages[chatUpdate.messages.length - 1]
 if (!m) {
 return;
 }
@@ -57,6 +61,7 @@ global.db.data.users[m.sender] = {}
 if (user) {
 if (!isNumber(user.exp)) user.exp = 0
 if (!('premium' in user)) user.premium = false
+if (!('muto' in user)) user.muto = false
 if (!isNumber(user.joincount)) user.joincount = 1
 if (!isNumber(user.money)) user.money = 150
 if (!isNumber(user.limit)) user.limit = 15 	       
@@ -840,6 +845,7 @@ pillhero: 0,
 pisang: 0,
 pointxp: 0,
 potion: 10,
+muto: false,
 premium: false,
 premiumTime: 0,
 ramuan: 0,
@@ -970,6 +976,7 @@ if (!('sWelcome' in chat)) chat.sWelcome = ''
 if (!('sBye' in chat)) chat.sBye = ''                    
 if (!('sPromote' in chat)) chat.sPromote = ''             
 if (!('sDemote' in chat)) chat.sDemote = '' 
+if (!('sCondition' in chat)) chat.sCondition = JSON.stringify([{ grupo: { usuario: [], condicion: [], admin: '' }, prefijos: []}])
 if (!('delete' in chat)) chat.delete = false                   
 if (!('modohorny' in chat)) chat.modohorny = true       
 if (!('stickers' in chat)) chat.stickers = false            
@@ -1004,6 +1011,7 @@ sWelcome: '',
 sBye: '',
 sPromote: '',
 sDemote: '', 
+sCondition: JSON.stringify([{ grupo: { usuario: [], condicion: [], admin: '' }, prefijos: []}]), 
 delete: true,
 modohorny: true,
 stickers: false,
@@ -1193,10 +1201,10 @@ user.antispam++
 return
 }
 
-//Antispam		
+//Antispam 2		
 if (user.antispam2 && isROwner) return
-let time = global.db.data.users[m.sender].spam + 5000
-if (new Date - global.db.data.users[m.sender].spam < 5000) throw console.log(`[ SPAM ]`) 
+let time = global.db.data.users[m.sender].spam + 3000
+if (new Date - global.db.data.users[m.sender].spam < 3000) return console.log(`[ SPAM ]`) 
 global.db.data.users[m.sender].spam = new Date * 1
 }
 		
@@ -1332,7 +1340,12 @@ this.msgqueque.splice(quequeIndex, 1)
 }
 //console.log(global.db.data.users[m.sender])
 let user, stats = global.db.data.stats
-if (m) {
+if (m) { let utente = global.db.data.users[m.sender]
+if (utente.muto == true) {
+let bang = m.key.id
+let cancellazzione = m.key.participant
+await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: cancellazzione }})
+}
 if (m.sender && (user = global.db.data.users[m.sender])) {
 user.exp += m.exp
 user.limit -= m.limit * 1
@@ -1402,7 +1415,7 @@ case 'remove':
 if (chat.welcome) {
 let groupMetadata = await this.groupMetadata(id) || (conn.chats[id] || {}).metadata
 for (let user of participants) {
-let pp = gataMenu
+let pp = global.gataImg
 try {
 pp = await this.profilePictureUrl(user, 'image')
 } catch (e) {
@@ -1435,6 +1448,7 @@ mentionedJid:[user],
 "containsAutoReply": true,
 "mediaType": 1, 
 sourceUrl: accountsgb }}}, { quoted: fkontak2 })
+apii.data = ''
 //this.sendFile(id, apii.data, 'pp.jpg', text, null, false, { mentions: [user] }, { quoted: fkontak2 })
 }}}
 			    
@@ -1500,7 +1514,7 @@ ${lenguajeGB['smsCont20']()} @${participant.split`@`[0]}
 ${lenguajeGB['smsCont21']()}
 *╰━━━⬣ ${lenguajeGB['smsCont19']()} ⬣━━╯*`.trim();
 await this.sendMessage(msg.chat, {text: antideleteMessage, mentions: [participant]}, {quoted: msg})
-//this.copyNForward(msg.chat, msg).catch(e => console.log(e, msg))
+this.copyNForward(msg.chat, msg).catch(e => console.log(e, msg))
 } catch (e) {
 console.error(e)
 }}
